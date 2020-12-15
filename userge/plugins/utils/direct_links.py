@@ -23,7 +23,7 @@ from userge.utils import humanbytes
     'header': "Generate a direct download link",
     'supported links': [
         'Google Drive', 'Cloud Mail', 'Yandex.Disk', 'AFH',
-        'MediaFire', 'SourceForge', 'OSDN', 'GitHub'],
+        'MediaFire', 'SourceForge', 'OSDN', 'GitHub', 'Mega'],
     'usage': "{tr}direct [link]"})
 async def direct_(message: Message):
     """direct links generator"""
@@ -54,6 +54,8 @@ async def direct_(message: Message):
             reply += f" 👉 {github(link)}\n"
         elif 'androidfilehost.com' in link:
             reply += f" 👉 {androidfilehost(link)}\n"
+        elif 'mega.' in link:
+            reply += f" 👉 {mega_dl(link)}\n"
         else:
             reply += f" 👀 {link} is not supported!\n"
     await message.edit(reply)
@@ -273,6 +275,29 @@ def androidfilehost(url: str) -> str:
         name = item['name']
         dl_url = item['url']
         reply += f'[{name}]({dl_url}) '
+    return reply
+
+
+def mega_dl(url: str) -> str:
+    """ MEGA.nz direct links generator
+    Using https://github.com/tonikelope/megadown"""
+    reply = ''
+    try:
+        link = re.findall(r'\bhttps?://.*mega.*\.nz\S+', url)[0]
+    except IndexError:
+        reply = "`No MEGA.nz links found`\n"
+        return reply
+    command = f'bin/megadown -q -m {link}'
+    result = popen(command).read()
+    try:
+        data = json.loads(result)
+    except json.JSONDecodeError:
+        reply += "`Error: Can't extract the link`\n"
+        return reply
+    dl_url = data['url']
+    name = data['file_name']
+    size = naturalsize(int(data['file_size']))
+    reply += f'[{name} ({size})]({dl_url})\n'
     return reply
 
 
